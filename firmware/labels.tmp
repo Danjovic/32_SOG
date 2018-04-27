@@ -1,0 +1,52 @@
+<ASSEMBLER_INFO>
+ <VERSION>2.1.42</VERSION>
+ <DEVICE>ATtiny85</DEVICE>
+ <WORKING_DIR>C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware</WORKING_DIR>
+ <INCLUDE_PATH>
+  <DIR>C:\Program Files (x86)\Atmel\AVR Tools\AvrAssembler2\Appnotes</DIR>
+ </INCLUDE_PATH>
+ <SOURCE_FILE>C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\main.asm</SOURCE_FILE>
+ <INCLUDED_FILES>
+  <FILE>C:\Program Files (x86)\Atmel\AVR Tools\AvrAssembler2\Appnotes\tn85def.inc</FILE>
+ </INCLUDED_FILES>
+ <OBJECT_FILES>
+  <FILE>C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\main.obj</FILE>
+ </OBJECT_FILES>
+ <HEX_FILES>
+  <FILE>C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\main.hex</FILE>
+ </HEX_FILES>
+ <OUTPUT_FILES>
+  <FILE>C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\main.map</FILE>
+ </OUTPUT_FILES>
+ <LABELS>
+  <START><FILE>C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\main.asm</FILE><LINE>78</LINE></START>
+  <EXT_INT><FILE>C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\main.asm</FILE><LINE>60</LINE></EXT_INT>
+  <PC_INT><FILE>C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\main.asm</FILE><LINE>61</LINE></PC_INT>
+  <TIMER1_COMPA><FILE>C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\main.asm</FILE><LINE>62</LINE></TIMER1_COMPA>
+  <TIMER1_OVF><FILE>C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\main.asm</FILE><LINE>63</LINE></TIMER1_OVF>
+  <TIMER0_OVF><FILE>C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\main.asm</FILE><LINE>64</LINE></TIMER0_OVF>
+  <EE_RDY><FILE>C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\main.asm</FILE><LINE>65</LINE></EE_RDY>
+  <ANA_COMP><FILE>C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\main.asm</FILE><LINE>66</LINE></ANA_COMP>
+  <ADCC><FILE>C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\main.asm</FILE><LINE>67</LINE></ADCC>
+  <TIMER1_COMPB><FILE>C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\main.asm</FILE><LINE>68</LINE></TIMER1_COMPB>
+  <TIMER0_COMPA><FILE>C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\main.asm</FILE><LINE>69</LINE></TIMER0_COMPA>
+  <TIMER0_COMPB><FILE>C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\main.asm</FILE><LINE>70</LINE></TIMER0_COMPB>
+  <WDT><FILE>C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\main.asm</FILE><LINE>71</LINE></WDT>
+  <USI_START><FILE>C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\main.asm</FILE><LINE>72</LINE></USI_START>
+  <USI_OVF><FILE>C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\main.asm</FILE><LINE>73</LINE></USI_OVF>
+  <loop><FILE>C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\main.asm</FILE><LINE>125</LINE></loop>
+  <Heq><FILE>C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\main.asm</FILE><LINE>222</LINE></Heq>
+  <Vser><FILE>C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\main.asm</FILE><LINE>268</LINE></Vser>
+  <Blank><FILE>C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\main.asm</FILE><LINE>313</LINE></Blank>
+  <Tbord><FILE>C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\main.asm</FILE><LINE>311</LINE></Tbord>
+  <Vis1><FILE>C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\main.asm</FILE><LINE>383</LINE></Vis1>
+  <BBord><FILE>C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\main.asm</FILE><LINE>312</LINE></BBord>
+  <Half1><FILE>C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\main.asm</FILE><LINE>339</LINE></Half1>
+  <Half2><FILE>C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\main.asm</FILE><LINE>365</LINE></Half2>
+  <Table_Ascending><FILE>C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\main.asm</FILE><LINE>515</LINE></Table_Ascending>
+  <DoStripeAscending><FILE>C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\main.asm</FILE><LINE>415</LINE></DoStripeAscending>
+  <Vis2><FILE>C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\main.asm</FILE><LINE>442</LINE></Vis2>
+  <Table_Descending><FILE>C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\main.asm</FILE><LINE>551</LINE></Table_Descending>
+  <DoStripeDescending><FILE>C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\main.asm</FILE><LINE>474</LINE></DoStripeDescending>
+ </LABELS>
+</ASSEMBLER_INFO>

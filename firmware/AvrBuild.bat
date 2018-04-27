@@ -1,0 +1,2 @@
+@ECHO OFF
+"C:\Program Files (x86)\Atmel\AVR Tools\AvrAssembler2\avrasm2.exe" -S "C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\labels.tmp" -fI -W+ie -C V2 -o "C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\main.hex" -d "C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\main.obj" -e "C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\main.eep" -m "C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\main.map" "C:\Users\user\Desktop\Projetos\AVR\32SOG\firmware\main.asm"
