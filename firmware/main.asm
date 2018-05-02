@@ -5,19 +5,20 @@
 ;
 .nolist
 .include "tn85def.inc"
+.include "definitions.inc" 
 .list
 
-.equ SyncBit  = 0
-.equ Grey0Bit = 5
-.equ Grey1Bit = 1
-.equ Grey2Bit = 2
-.equ Grey3Bit = 3
-.equ Grey4Bit = 4
+;.equ SyncBit  = 0
+;.equ Grey0Bit = 5
+;.equ Grey1Bit = 1
+;.equ Grey2Bit = 2
+;.equ Grey3Bit = 3
+;.equ Grey4Bit = 4
 
 
-.equ SyncLevel  = 0
-.equ BlackLevel = (1<<SyncBit)
-.equ WhiteLevel = (1<<SyncBit)|(1<<Grey0Bit)|(1<<Grey1Bit)|(1<<Grey2Bit)|(1<<Grey3Bit)|(1<<Grey4Bit)
+;.equ SyncLevel  = 0
+;.equ BlackLevel = (1<<SyncBit)
+;.equ WhiteLevel = (1<<SyncBit)|(1<<Grey0Bit)|(1<<Grey1Bit)|(1<<Grey2Bit)|(1<<Grey3Bit)|(1<<Grey4Bit)
 
 /*
  Register usage
@@ -39,7 +40,7 @@
 .def Sync  = r21
 
 .cseg
-.org 0
+;.org 0
 	rjmp START         ; External Pin, Power-on Reset,Brown-out Reset, Watchdog Reset
 	rjmp EXT_INT       ; External Interrupt Request 0
 	rjmp PC_INT        ; Pin Change Interrupt Request 0
@@ -76,7 +77,26 @@ reti
 
 ; ****************
 START:
-	; initialize stach
+        ; Initialize system clock to PLL
+
+;     The internal PLL is enabled when:
+;     The PLLE bit in the register PLLCSR is set.
+;     The CKSEL fuse is programmed to ‘0001’.
+;     The CKSEL fuse is programmed to ‘0011’.
+;     The PLLCSR bit PLOCK is set when PLL is locked.
+      
+;	ldi r18,1
+;	out CKSEL,r18
+	ldi r18,0
+	out CLKPR,r18
+	ldi r18,(1<<PLLE)
+	out PLLCSR,r18
+	in r18,PLLCSR
+	andi r18,(1<<PLOCK)
+;	breq pc-1  ; wait for PLL to stabilize
+
+
+	; initialize stack
 	ldi r18, low(RAMEND)
 	out SPL,r18
 	ldi r16, high(RAMEND)
@@ -92,8 +112,10 @@ START:
 	ser r18
 	out DDRB,r18
 	out PORTB,Black
-	
-    ; Generate video pattern    
+
+
+
+    ; Generate video pattern
 
 
 ; == FIRST FRAME, 262 lines ==
@@ -102,20 +124,36 @@ START:
 ;   3      Vser  - Vertical Serration Lines
 ;   3      Heq   - Horizontal Equalization Lines
 ;  10      Blank - Top Blanking lines
-;  26      TBord - Top Border lines
-; 192      Vis   - Visible lines, field 1
-;  25      BBord - Bottom Border lines
+;  24      TBord - Top Border lines
+; 200      Vis   - Visible lines, field 1
+;                  30 - progressive  greyscale
+;                  40 - resolution + progress greyscale
+;                  30 - progressive  greyscale
+;
+;                  30 - decrescent  greyscale
+;                  40 - resolution + decrescent greyscale
+;                  30 - decrescent  greyscale
+;
+;  21      BBord - Bottom Border lines
 ;
 ; == SECOND FRAME, 263 lines ==
 ; 1/2      half1 - first half line (half blank line)
 ;   3      Heq   - Horizontal Equalization Lines
 ;   3      Vser  - Vertical Serration Lines
-;   3      Heq   - Horizontal Equalization Lines 
-; 1/2      half2 - second half line (shelf) 
+;   3      Heq   - Horizontal Equalization Lines
+; 1/2      half2 - second half line (shelf)
 ;  10      Blank - Top Blanking lines
-;  26      TBord - Top Border lines
-; 192      Vis   - Visible lines, field 2
-;  25      BBord - Bottom Border lines
+;  24      TBord - Top Border lines
+; 200      Vis   - Visible lines, field 2
+;                  30 - progressive  greyscale
+;                  40 - resolution + progress greyscale
+;                  30 - progressive  greyscale
+;
+;                  30 - decrescent  greyscale
+;                  40 - resolution + decrescent greyscale
+;                  30 - decrescent  greyscale
+;
+;  21      BBord - Bottom Border lines
 ;------
 ; 525 lines 
 
@@ -123,8 +161,9 @@ START:
 
 
 loop:
+
 ; == FIRST FRAME, 262 lines ==
-	ldi r23,3   ; 1      (1016 from the last line)
+	ldi r23,3   ; 1      (1016 from the last line at the end of the loop)
 
 	rcall Heq   ; 1013   1013
 	dec r23     ; 1      1014
@@ -144,17 +183,49 @@ loop:
 	rcall Blank ; 1013   1013
 	dec r23     ; 1      1014
 	brne pc-2   ; 2/1    1016/1015
-	ldi r23,26  ; 1           1016 value for next cycle
+	ldi r23,22  ; 1           1016 value for next cycle
 
 	rcall Tbord ; 1013   1013
 	dec r23     ; 1      1014
 	brne pc-2   ; 2/1    1016/1015
-	ldi r23,192 ; 1           1016 value for next cycle
-
-	rcall Vis1  ; 1013   1013
+	
+	
+; *************** Visible: 200 lines ******************
+	ldi r23,30 ; 1           1016 value for next cycle
+	rcall ProgGrayscale  ; 1013   1013
 	dec r23     ; 1      1014
 	brne pc-2   ; 2/1    1016/1015
-	ldi r23, 25 ; 1           1016 value for next cycle
+
+	ldi r23,40  ;            1016
+	rcall ResProgGray  ; 1013   1013
+	dec r23     ; 1      1014
+	brne pc-2   ; 2/1    1016/1015
+
+	ldi r23,30 ; 1           1016 value for next cycle
+	rcall ProgGrayscale  ; 1013   1013
+	dec r23     ; 1      1014
+	brne pc-2   ; 2/1    1016/1015
+
+	ldi r23,30 ; 1           1016 value for next cycle
+	rcall DecrGrayscale  ; 1013   1013
+	dec r23     ; 1      1014
+	brne pc-2   ; 2/1    1016/1015
+
+	ldi r23,40  ;            1016
+	rcall ResDecrGray  ; 1013   1013
+	dec r23     ; 1      1014
+	brne pc-2   ; 2/1    1016/1015
+
+	ldi r23,30 ; 1           1016 value for next cycle
+	rcall DecrGrayscale  ; 1013   1013
+	dec r23     ; 1      1014
+	brne pc-2   ; 2/1    1016/101
+
+; *************** End of Visible Lines ****************
+
+
+
+	ldi r23, 21 ; 1           1016 value for next cycle
 
 	rcall BBord ; 1013   1013
 	dec r23     ; 1      1014
@@ -191,17 +262,49 @@ loop:
 	rcall Blank ; 1013   1013
 	dec r23     ; 1      1014
 	brne pc-2   ; 2/1    1016/1015
-	ldi r23,26  ; 1           1016 value for next cycle
+	ldi r23,22  ; 1           1016 value for next cycle
 
 	rcall Tbord ; 1013   1013
 	dec r23     ; 1      1014
 	brne pc-2   ; 2/1    1016/1015
-	ldi r23,192 ; 1           1016 value for next cycle
 
-	rcall Vis1  ; 1013   1013
+; *************** Visible: 200 lines ******************
+	ldi r23,30 ; 1           1016 value for next cycle
+	rcall ProgGrayscale  ; 1013   1013
 	dec r23     ; 1      1014
 	brne pc-2   ; 2/1    1016/1015
-	ldi r23,24  ; 1           1016 value for next cycle
+
+	ldi r23,40  ;            1016
+	rcall ResProgGray  ; 1013   1013
+	dec r23     ; 1      1014
+	brne pc-2   ; 2/1    1016/1015
+
+	ldi r23,30 ; 1           1016 value for next cycle
+	rcall ProgGrayscale  ; 1013   1013
+	dec r23     ; 1      1014
+	brne pc-2   ; 2/1    1016/1015
+
+	ldi r23,30 ; 1           1016 value for next cycle
+	rcall DecrGrayscale  ; 1013   1013
+	dec r23     ; 1      1014
+	brne pc-2   ; 2/1    1016/1015
+
+	ldi r23,40  ;            1016
+	rcall ResDecrGray  ; 1013   1013
+	dec r23     ; 1      1014
+	brne pc-2   ; 2/1    1016/1015
+
+	ldi r23,30 ; 1           1016 value for next cycle
+	rcall DecrGrayscale  ; 1013   1013
+	dec r23     ; 1      1014
+	brne pc-2   ; 2/1    1016/10115
+
+
+; *************** End of Visible Lines ****************
+
+
+	ldi r23,20  ; 1           1016 value for next cycle
+
 
 	rcall BBord ; 1013   1013
 	dec r23     ; 1      1014
@@ -214,9 +317,11 @@ loop:
 
 
 
-
+; **************************************************
+;
 ; Line generation routines  1013 cycles each
-
+;
+; **************************************************
 
 ; ***** Horizontal Equalization Lines *****
 Heq: ; 3 + 1006 + 4 cycles
@@ -379,7 +484,7 @@ Half2: ; 3 + 498 + 4 cycles = 505  (just a delay)
 ; Visible lines, 1013 cycles each
 
 
-
+ProgGrayscale:
 Vis1: ; 3 + 1006 + 4 cycles
 
 	; 75 cycles Hsync   ; cycls                sum
@@ -404,16 +509,16 @@ Vis1: ; 3 + 1006 + 4 cycles
 	; remaining: 856 - 37 = 19 cycles
 
     ; 9 cycles pre                                  
-    ldi r24,31 ; 31 stripes              ; 1   1
-	ldi ZH, high(Table_Ascending<<1)     ; 1   2
-	ldi ZL,  low(Table_Ascending<<1)     ; 1   3
-	lpm r18, Z+ ; get first stripe shade ; 3   6
+	ldi r24,31 ; 31 stripes              ; 1   1
+	ldi ZH, high(Table_Ascending*2)     ; 1   2
+	ldi ZL,  low(Table_Ascending*2)     ; 1   3
+	lpm r18, z+  ; get first stripe shade ; 3   6
 	nop                                  ; 1   7
 	nop                                  ; 1   8
 	nop                                  ; 1   9
 
 DoStripeAscending:  ; 27*31 = 837 
-    out PORTB,r18            ; 1            1
+	out PORTB,r18            ; 1            1
 	         
 	ldi r22,6                ; 3*r22 = 18  19
 	dec r22                  ; 
@@ -423,11 +528,11 @@ DoStripeAscending:  ; 27*31 = 837
 	nop                      ; 1           23
 	nop                      ; 1           24
 	dec r24                  ; 1           25
-	brne DoStripeAscending   ; 2/1         27 / 26
+	brne pc-8 ;DoStripeAscending   ; 2/1         27 / 26
 	nop                      ; 1                27
 
 	; remaining 10 cycles
-    out PORTB,Black ;                1
+	out PORTB,Black ;                1
 	ldi r22,3       ; 3*r22 = 9     10
 	dec r22
 	brne pc-1
@@ -439,6 +544,8 @@ DoStripeAscending:  ; 27*31 = 837
 	ret 
 	; after returning we have 6 more cycles until the next I/O write
 
+
+DecrGrayscale:
 Vis2: ; 3 + 1006 + 4 cycles
 
 	; 75 cycles Hsync   ; cycls                sum
@@ -463,16 +570,16 @@ Vis2: ; 3 + 1006 + 4 cycles
 	; remaining: 856 - 37 = 19 cycles
 
     ; 9 cycles pre                                  
-    ldi r24,31 ; 31 stripes              ; 1   1
-	ldi ZH, high(Table_Descending<<1)    ; 1   2
-	ldi ZL,  low(Table_Descending<<1)    ; 1   3
-	lpm r18, Z+ ; get first stripe shade ; 3   6
+	ldi r24,31 ; 31 stripes              ; 1   1
+	ldi ZH, high(Table_Descending*2)    ; 1   2
+	ldi ZL,  low(Table_Descending*2)    ; 1   3
+	lpm r18, z+ ; get first stripe shade ; 3   6
 	nop                                  ; 1   7
 	nop                                  ; 1   8
 	nop                                  ; 1   9
 
 DoStripeDescending:  ; 27*31 = 837 
-    out PORTB,r18            ; 1            1
+	out PORTB,r18            ; 1            1
 	         
 	ldi r22,6                ; 3*r22 = 18  19
 	dec r22                  ; 
@@ -482,11 +589,11 @@ DoStripeDescending:  ; 27*31 = 837
 	nop                      ; 1           23
 	nop                      ; 1           24
 	dec r24                  ; 1           25
-	brne DoStripeDescending   ; 2/1         27 / 26
+	brne pc-8 ;DoStripeDescending   ; 2/1         27 / 26
 	nop                      ; 1                 27
 
  ; remaining 10 cycles
-    out PORTB,Black ;                1
+	out PORTB,Black ;                1
 	ldi r22,3       ; 3*r22 = 9     10
 	dec r22
 	brne pc-1
@@ -499,89 +606,314 @@ DoStripeDescending:  ; 27*31 = 837
 
 
 
+; *************************************************************************
+; Resolution pattern with grayscale
+ResProgGray:
+Resol1: ; 3 + 1006 + 4 cycles
+
+	; 75 cycles Hsync   ; cycls                sum
+	out PORTB,Sync      ; 1                      1
+	ldi r22,24          ; 1                   
+	dec r22             ; 1    r22*3 = 72       73
+	brne pc-1           ; 2/1  
+	nop                 ; 1                     74
+	nop                 ; 1                     75
+
+	; 75 cycles Backporch  ; cycls                sum
+	out PORTB,Black     ; 1                      1
+	ldi r22,24          ; 1                   
+	dec r22             ; 1    r22*3 = 72       73
+	brne pc-1           ; 2/1
+	nop                 ; 1                     74
+	nop                 ; 1                     75
+
+	; remaining 856 visible cycles from here(1006-75-75)
+
+	; 31 stripes * 27 cycles = 837 cycles
+	; remaining: 856 - 37 = 19 cycles
+
+
+	; 5 stripes
+	; 3 stripe times= resolution pattern
+	; 13 stripes
+	; 3 stripe times= resolution pattern
+	; 5 stripes
+
+
+    ; 9 cycles pre
+	ldi r24,6 ; 5 stripes              ; 1   1
+	ldi ZH, high(Table_Ascending*2)     ; 1   2
+	ldi ZL,  low(Table_Ascending*2)     ; 1   3
+	lpm r18, z+  ; get first stripe shade ; 3   6
+	nop                                  ; 1   7
+
+	rjmp ContinueResol                  ;2
+
+
+; *************************************************************************
+; Resolution pattern with descending grayscale
+ResDecrGray:
+Resol2: ; 3 + 1006 + 4 cycles
+
+	; 75 cycles Hsync   ; cycls                sum
+	out PORTB,Sync      ; 1                      1
+	ldi r22,24          ; 1
+	dec r22             ; 1    r22*3 = 72       73
+	brne pc-1           ; 2/1
+	nop                 ; 1                     74
+	nop                 ; 1                     75
+
+	; 75 cycles Backporch  ; cycls                sum
+	out PORTB,Black     ; 1                      1
+	ldi r22,24          ; 1
+	dec r22             ; 1    r22*3 = 72       73
+	brne pc-1           ; 2/1
+	nop                 ; 1                     74
+	nop                 ; 1                     75
+
+	; remaining 856 visible cycles from here(1006-75-75)
+
+	; 31 stripes * 27 cycles = 837 cycles
+	; remaining: 856 - 37 = 19 cycles
+
+
+	; 5 stripes
+	; 3 stripe times= resolution pattern
+	; 13 stripes
+	; 3 stripe times= resolution pattern
+	; 5 stripes
+
+
+    ; 9 cycles pre
+	ldi r24,6 ; 5 stripes              ; 1   1
+	ldi ZH, high(Table_Descending*2)     ; 1   2
+	ldi ZL,  low(Table_Descending*2)     ; 1   3
+	lpm r18, z+  ; get first stripe shade ; 3   6
+	nop                                  ; 1   7
+	nop                                  ; 1   8
+	nop                                  ; 1   9
+
+ContinueResol:
+
+; DoStripeAscending:
+	out PORTB,r18            ; 1            1
+
+	ldi r22,6                ; 3*r22 = 18  19
+	dec r22                  ;
+	brne pc-1                ;
+
+	lpm r18, Z+              ; 3           22
+	nop                      ; 1           23
+	nop                      ; 1           24
+	dec r24                  ; 1           25
+	brne pc-8 ;              ; 2/1         27 / 26
+	nop                      ; 1                27
+
+
+; Resolution pattern
+  	; highest resolution 7 line pairs 14 cycles
+	out PORTB,Black ; 1
+	 out PORTB,White ; 1
+	out PORTB,Black ; 1
+	 out PORTB,White ; 1
+	out PORTB,Black ; 1
+	 out PORTB,White ; 1
+	out PORTB,Black ; 1
+	 out PORTB,White ; 1
+	out PORTB,Black ; 1
+	 out PORTB,White ; 1
+	out PORTB,Black ; 1
+	 out PORTB,White ; 1
+	out PORTB,Black ; 1
+	 out PORTB,White ; 1
+
+  	; mid resolution 7 line pairs  28 cycles
+	out PORTB,Black ; 1
+	nop             ; 1
+ 	 out PORTB,White ; 1
+	 nop             ; 1
+	out PORTB,Black ; 1
+	nop             ; 1
+	 out PORTB,White ; 1
+	 nop             ; 1
+	out PORTB,Black ; 1
+	nop             ; 1
+	 out PORTB,White ; 1
+	 nop             ; 1
+	out PORTB,Black ; 1
+	nop             ; 1
+	 out PORTB,White ; 1
+	 nop             ; 1
+	out PORTB,Black ; 1
+	nop             ; 1
+	 out PORTB,White ; 1
+	 nop             ; 1
+	out PORTB,Black ; 1
+	nop             ; 1
+	 out PORTB,White ; 1
+	 nop             ; 1
+	out PORTB,Black ; 1
+	nop             ; 1
+	 out PORTB,White ; 1
+;	 nop             ; 1   save 1 cycle for loading
+                        ;
+
+  	; mid resolution 6 1/2 line pairs
+	ldi r22,6       ; 1
+	out PORTB,Black ; 1
+	nop             ; 1
+	dec r22
+	out PORTB,White ; 1
+	brne pc-4       ; 2
+	nop             ; 1
+	out PORTB,Black ; 1   half line pair
+	nop             ; 1
+;	nop             ; 1   save cycle here
+
+; Continue stripes
+ 	ldi r24,13
+	out PORTB,r18            ; 1            1
+
+	ldi r22,6                ; 3*r22 = 18  19
+	dec r22                  ;
+	brne pc-1                ;
+
+	lpm r18, Z+              ; 3           22
+	nop                      ; 1           23
+	nop                      ; 1           24
+	dec r24                  ; 1           25
+	brne pc-8 ;              ; 2/1         27 / 26
+	nop                      ; 1                27
+
+; Resolution pattern, second time
+  	; highest resolution 7 line pairs
+	out PORTB,Black ; 1
+	out PORTB,White ; 1
+	out PORTB,Black ; 1
+	out PORTB,White ; 1
+	out PORTB,Black ; 1
+	out PORTB,White ; 1
+	out PORTB,Black ; 1
+	out PORTB,White ; 1
+	out PORTB,Black ; 1
+	out PORTB,White ; 1
+	out PORTB,Black ; 1
+	out PORTB,White ; 1
+	out PORTB,Black ; 1
+	out PORTB,White ; 1
+
+  	; mid resolution 7 line pairs
+	out PORTB,Black ; 1
+	nop             ; 1
+	out PORTB,White ; 1
+	nop             ; 1
+	out PORTB,Black ; 1
+	nop             ; 1
+	out PORTB,White ; 1
+	nop             ; 1
+	out PORTB,Black ; 1
+	nop             ; 1
+	out PORTB,White ; 1
+	nop             ; 1
+	out PORTB,Black ; 1
+	nop             ; 1
+	out PORTB,White ; 1
+	nop             ; 1
+	out PORTB,Black ; 1
+	nop             ; 1
+	out PORTB,White ; 1
+	nop             ; 1
+	out PORTB,Black ; 1
+	nop             ; 1
+	out PORTB,White ; 1
+	nop             ; 1
+	out PORTB,Black ; 1
+	nop             ; 1
+	out PORTB,White ; 1
+;	nop             ; 1   save 1 cycle for loading
+                        ;
+
+  	; mid resolution 6 1/2 line pairs
+	ldi r22,6       ; 1
+	out PORTB,Black ; 1
+	nop             ; 1
+	dec r22
+	out PORTB,White ; 1
+	brne pc-4       ; 2
+	nop             ; 1
+	out PORTB,Black ; 1   half line pair
+	nop             ; 1
+;	nop             ; 1   save cycle here
+
+
+
+; last  stripes on screen
+        ldi r24,6                ; 1   Five stripes
+	out PORTB,r18            ; 1            1
+
+	ldi r22,6                ; 3*r22 = 18  19
+	dec r22                  ;
+	brne pc-1                ;
+
+	lpm r18, Z+              ; 3           22
+	nop                      ; 1           23
+	nop                      ; 1           24
+	dec r24                  ; 1           25
+	brne pc-8 ;              ; 2/1         27 / 26
+	nop                      ; 1                27
+
+
+	; remaining 10 cycles
+	out PORTB,Black ;                1
+	ldi r22,3       ; 3*r22 = 9     10
+	dec r22
+	brne pc-1
+
+	; 4 more cycles to return 
+	ret 
+	; after returning we have 6 more cycles until the next I/O write
+
+
 
 ; ************** Data Area ******************************
 
-.equ Sy = SyncBit 
-.equ G0 = Grey0Bit
-.equ G1 = Grey1Bit
-.equ G2 = Grey2Bit
-.equ G3 = Grey3Bit
-.equ G4 = Grey4Bit
 
-
-
-;.db (1<<Sy)|(0<<G4)|(0<<G3)|(0<<G2)|(0<<G1)|(0<<G0) ; Black
 Table_Ascending:
-.db (1<<Sy)|(0<<G4)|(0<<G3)|(0<<G2)|(0<<G1)|(1<<G0) ; 
-.db (1<<Sy)|(0<<G4)|(0<<G3)|(0<<G2)|(1<<G1)|(0<<G0) ; 
-.db (1<<Sy)|(0<<G4)|(0<<G3)|(0<<G2)|(1<<G1)|(1<<G0) ; 
-.db (1<<Sy)|(0<<G4)|(0<<G3)|(1<<G2)|(0<<G1)|(0<<G0) ; 
-.db (1<<Sy)|(0<<G4)|(0<<G3)|(1<<G2)|(0<<G1)|(1<<G0) ; 
-.db (1<<Sy)|(0<<G4)|(0<<G3)|(1<<G2)|(1<<G1)|(0<<G0) ; 
-.db (1<<Sy)|(0<<G4)|(0<<G3)|(1<<G2)|(1<<G1)|(1<<G0) ; 
+.db   gray1,  gray2,  gray3,  gray4
+.db   gray5,  gray6,  gray7,  gray8
+.db   gray9, gray10, gray11, gray12
+.db  gray13, gray14, gray15, gray16
+.db  gray17, gray18, gray19, gray20
+.db  gray21, gray22, gray23, gray24
+.db  gray25, gray26, gray27, gray28
+.db  gray29, gray30, gray31, gray31
 
-.db (1<<Sy)|(0<<G4)|(1<<G3)|(0<<G2)|(0<<G1)|(0<<G0) ; 
-.db (1<<Sy)|(0<<G4)|(1<<G3)|(0<<G2)|(0<<G1)|(1<<G0) ; 
-.db (1<<Sy)|(0<<G4)|(1<<G3)|(0<<G2)|(1<<G1)|(0<<G0) ; 
-.db (1<<Sy)|(0<<G4)|(1<<G3)|(0<<G2)|(1<<G1)|(1<<G0) ; 
-.db (1<<Sy)|(0<<G4)|(1<<G3)|(1<<G2)|(0<<G1)|(0<<G0) ; 
-.db (1<<Sy)|(0<<G4)|(1<<G3)|(1<<G2)|(0<<G1)|(1<<G0) ; 
-.db (1<<Sy)|(0<<G4)|(1<<G3)|(1<<G2)|(1<<G1)|(0<<G0) ; 
-.db (1<<Sy)|(0<<G4)|(1<<G3)|(1<<G2)|(1<<G1)|(1<<G0) ; 
-
-.db (1<<Sy)|(1<<G4)|(0<<G3)|(0<<G2)|(0<<G1)|(0<<G0) ; 
-.db (1<<Sy)|(1<<G4)|(0<<G3)|(0<<G2)|(0<<G1)|(1<<G0) ; 
-.db (1<<Sy)|(1<<G4)|(0<<G3)|(0<<G2)|(1<<G1)|(0<<G0) ; 
-.db (1<<Sy)|(1<<G4)|(0<<G3)|(0<<G2)|(1<<G1)|(1<<G0) ; 
-.db (1<<Sy)|(1<<G4)|(0<<G3)|(1<<G2)|(0<<G1)|(0<<G0) ; 
-.db (1<<Sy)|(1<<G4)|(0<<G3)|(1<<G2)|(0<<G1)|(1<<G0) ; 
-.db (1<<Sy)|(1<<G4)|(0<<G3)|(1<<G2)|(1<<G1)|(0<<G0) ; 
-.db (1<<Sy)|(1<<G4)|(0<<G3)|(1<<G2)|(1<<G1)|(1<<G0) ; 
-
-.db (1<<Sy)|(1<<G4)|(1<<G3)|(0<<G2)|(0<<G1)|(0<<G0) ; 
-.db (1<<Sy)|(1<<G4)|(1<<G3)|(0<<G2)|(0<<G1)|(1<<G0) ; 
-.db (1<<Sy)|(1<<G4)|(1<<G3)|(0<<G2)|(1<<G1)|(0<<G0) ; 
-.db (1<<Sy)|(1<<G4)|(1<<G3)|(0<<G2)|(1<<G1)|(1<<G0) ; 
-.db (1<<Sy)|(1<<G4)|(1<<G3)|(1<<G2)|(0<<G1)|(0<<G0) ; 
-.db (1<<Sy)|(1<<G4)|(1<<G3)|(1<<G2)|(0<<G1)|(1<<G0) ; 
-.db (1<<Sy)|(1<<G4)|(1<<G3)|(1<<G2)|(1<<G1)|(0<<G0) ; 
-.db (1<<Sy)|(1<<G4)|(1<<G3)|(1<<G2)|(1<<G1)|(1<<G0) ; White
 
 Table_Descending:
-.db (1<<Sy)|(1<<G4)|(1<<G3)|(1<<G2)|(1<<G1)|(1<<G0) ; White				
-.db (1<<Sy)|(1<<G4)|(1<<G3)|(1<<G2)|(1<<G1)|(0<<G0) ; 				
-.db (1<<Sy)|(1<<G4)|(1<<G3)|(1<<G2)|(0<<G1)|(1<<G0) ; 				
-.db (1<<Sy)|(1<<G4)|(1<<G3)|(1<<G2)|(0<<G1)|(0<<G0) ; 				
-.db (1<<Sy)|(1<<G4)|(1<<G3)|(0<<G2)|(1<<G1)|(1<<G0) ; 				
-.db (1<<Sy)|(1<<G4)|(1<<G3)|(0<<G2)|(1<<G1)|(0<<G0) ; 				
-.db (1<<Sy)|(1<<G4)|(1<<G3)|(0<<G2)|(0<<G1)|(1<<G0) ; 				
-.db (1<<Sy)|(1<<G4)|(1<<G3)|(0<<G2)|(0<<G1)|(0<<G0) ; 				
-				
-.db (1<<Sy)|(1<<G4)|(0<<G3)|(1<<G2)|(1<<G1)|(1<<G0) ; 				
-.db (1<<Sy)|(1<<G4)|(0<<G3)|(1<<G2)|(1<<G1)|(0<<G0) ; 				
-.db (1<<Sy)|(1<<G4)|(0<<G3)|(1<<G2)|(0<<G1)|(1<<G0) ; 				
-.db (1<<Sy)|(1<<G4)|(0<<G3)|(1<<G2)|(0<<G1)|(0<<G0) ; 				
-.db (1<<Sy)|(1<<G4)|(0<<G3)|(0<<G2)|(1<<G1)|(1<<G0) ; 				
-.db (1<<Sy)|(1<<G4)|(0<<G3)|(0<<G2)|(1<<G1)|(0<<G0) ; 				
-.db (1<<Sy)|(1<<G4)|(0<<G3)|(0<<G2)|(0<<G1)|(1<<G0) ; 				
-.db (1<<Sy)|(1<<G4)|(0<<G3)|(0<<G2)|(0<<G1)|(0<<G0) ; 				
-				
-.db (1<<Sy)|(0<<G4)|(1<<G3)|(1<<G2)|(1<<G1)|(1<<G0) ; 				
-.db (1<<Sy)|(0<<G4)|(1<<G3)|(1<<G2)|(1<<G1)|(0<<G0) ; 				
-.db (1<<Sy)|(0<<G4)|(1<<G3)|(1<<G2)|(0<<G1)|(1<<G0) ; 				
-.db (1<<Sy)|(0<<G4)|(1<<G3)|(1<<G2)|(0<<G1)|(0<<G0) ; 				
-.db (1<<Sy)|(0<<G4)|(1<<G3)|(0<<G2)|(1<<G1)|(1<<G0) ; 				
-.db (1<<Sy)|(0<<G4)|(1<<G3)|(0<<G2)|(1<<G1)|(0<<G0) ; 				
-.db (1<<Sy)|(0<<G4)|(1<<G3)|(0<<G2)|(0<<G1)|(1<<G0) ; 				
-.db (1<<Sy)|(0<<G4)|(1<<G3)|(0<<G2)|(0<<G1)|(0<<G0) ; 				
-				
-.db (1<<Sy)|(0<<G4)|(0<<G3)|(1<<G2)|(1<<G1)|(1<<G0) ; 				
-.db (1<<Sy)|(0<<G4)|(0<<G3)|(1<<G2)|(1<<G1)|(0<<G0) ; 				
-.db (1<<Sy)|(0<<G4)|(0<<G3)|(1<<G2)|(0<<G1)|(1<<G0) ; 				
-.db (1<<Sy)|(0<<G4)|(0<<G3)|(1<<G2)|(0<<G1)|(0<<G0) ; 				
-.db (1<<Sy)|(0<<G4)|(0<<G3)|(0<<G2)|(1<<G1)|(1<<G0) ; 				
-.db (1<<Sy)|(0<<G4)|(0<<G3)|(0<<G2)|(1<<G1)|(0<<G0) ; 				
-.db (1<<Sy)|(0<<G4)|(0<<G3)|(0<<G2)|(0<<G1)|(1<<G0) ; 	
-			
-;.db (1<<Sy)|(0<<G4)|(0<<G3)|(0<<G2)|(0<<G1)|(0<<G0) ; Black
+.db  gray31, gray30, gray29, gray28
+.db  gray27, gray26, gray25, gray24
+.db  gray23, gray22, gray21, gray20
+.db  gray19, gray18, gray17, gray16
+.db  gray15, gray14, gray13, gray12
+.db  gray11, gray10,  gray9,  gray8
+.db   gray7,  gray6,  gray5,  gray4
+.db   gray3,  gray2,  gray1,  gray0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
