@@ -4,3 +4,8 @@
 This project implements a low cost portable NTSC video pattern generator for testing monochrome video systems regarding gain and resolution. 
 The circuit provides a video output with voltage and impedance according with the RS-170 standard. 
 A CR2025 coin cell powers the circuit that it is automatically activated when the output plug is connected.
+
+**Environment:**
+  * Compilation: AVR Studio 4 
+  * Circuit Board: Eagle 6.0 or above
+  * Spreadsheets: OpenOffice 
