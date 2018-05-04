@@ -4,12 +4,25 @@
 ; Released under GPL 2.0
 ;
 
-.equ SyncBit  = 0
+;.equ SyncBit  = 0
+
+
+;.equ Grey0Bit = 5
+;.equ Grey1Bit = 1
+;.equ Grey2Bit = 2
+;.equ Grey3Bit = 3
+;.equ Grey4Bit = 4
+
+.equ PORTV = PORTC
+.equ DDRV  = DDRC
+
 .equ Grey0Bit = 5
-.equ Grey1Bit = 1
-.equ Grey2Bit = 2
-.equ Grey3Bit = 3
-.equ Grey4Bit = 4
+.equ Grey1Bit = 4
+.equ Grey2Bit = 3
+.equ Grey3Bit = 2
+.equ Grey4Bit = 1
+.equ SyncBit  = 0
+
 
 
 .equ SyncLevel  = 0
@@ -54,6 +67,6 @@
 .equ gray28 = (1<<Sy)|(1<<G4)|(1<<G3)|(1<<G2)|(0<<G1)|(0<<G0) ; 				
 .equ gray29 = (1<<Sy)|(1<<G4)|(1<<G3)|(1<<G2)|(0<<G1)|(1<<G0) ;
 .equ gray30 = (1<<Sy)|(1<<G4)|(1<<G3)|(1<<G2)|(1<<G1)|(0<<G0) ;
-.equ gray31  = (1<<Sy)|(1<<G4)|(1<<G3)|(1<<G2)|(1<<G1)|(1<<G0) ; White
+.equ gray31 = (1<<Sy)|(1<<G4)|(1<<G3)|(1<<G2)|(1<<G1)|(1<<G0) ; White
 
 

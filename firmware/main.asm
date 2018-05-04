@@ -4,21 +4,12 @@
 ; Released under GPL 2.0
 ;
 .nolist
-.include "tn85def.inc"
+;.include "tn85def.inc"
+.include "m328def.inc"
 .include "definitions.inc" 
 .list
 
-;.equ SyncBit  = 0
-;.equ Grey0Bit = 5
-;.equ Grey1Bit = 1
-;.equ Grey2Bit = 2
-;.equ Grey3Bit = 3
-;.equ Grey4Bit = 4
 
-
-;.equ SyncLevel  = 0
-;.equ BlackLevel = (1<<SyncBit)
-;.equ WhiteLevel = (1<<SyncBit)|(1<<Grey0Bit)|(1<<Grey1Bit)|(1<<Grey2Bit)|(1<<Grey3Bit)|(1<<Grey4Bit)
 
 /*
  Register usage
@@ -87,12 +78,12 @@ START:
       
 ;	ldi r18,1
 ;	out CKSEL,r18
-	ldi r18,0
-	out CLKPR,r18
-	ldi r18,(1<<PLLE)
-	out PLLCSR,r18
-	in r18,PLLCSR
-	andi r18,(1<<PLOCK)
+;	ldi r18,0
+;	out CLKPR,r18
+;	ldi r18,(1<<PLLE)
+;	out PLLCSR,r18
+;	in r18,PLLCSR
+;	andi r18,(1<<PLOCK)
 ;	breq pc-1  ; wait for PLL to stabilize
 
 
@@ -110,8 +101,8 @@ START:
 
 	; initialize I/O ports
 	ser r18
-	out DDRB,r18
-	out PORTB,Black
+	out DDRV,r18
+	out PORTV,Black
 
 
 
@@ -328,14 +319,14 @@ Heq: ; 3 + 1006 + 4 cycles
 	 ; 3  cycles so far from rcall
 
 	; 37 cycles sync    ; cycls                sum
-	out PORTB,Sync      ; 1                      1
+	out PORTV,Sync      ; 1                      1
 	ldi r22,12          ; 1                   
 	dec r22             ; 1     r22*3 = 36      37     
 	brne pc-1           ; 2/1           
 
 
 	; 471 cycles black  ; cycls                sum
-	out PORTB,Black     ; 1                      1
+	out PORTV,Black     ; 1                      1
 	ldi r22,156         ; 1                   
 	dec r22             ; 1     r22*3 = 468    469
 	brne pc-1           ; 2/1 
@@ -344,7 +335,7 @@ Heq: ; 3 + 1006 + 4 cycles
 
 
 	; 37 cycles sync    ; cycls                sum
-	out PORTB,Sync      ; 1                      1
+	out PORTV,Sync      ; 1                      1
 	ldi r22,12          ; 1                   
 	dec r22             ; 1     r22*3 = 36      37     
 	brne pc-1           ; 2/1            
@@ -357,7 +348,7 @@ Heq: ; 3 + 1006 + 4 cycles
 	; to complete the 1016 cycles from the horizontal line
 	;
 	; 461 cycles black  ; cycls                sum
-	out PORTB,Black     ; 1                      1
+	out PORTV,Black     ; 1                      1
 	ldi r22,153         ; 1                   
 	dec r22             ; 1     r22*3 = 459    460
 	brne pc-1           ; 2/1
@@ -375,13 +366,13 @@ Vser: ; 3 + 1006 + 4 cycles = 1013
 	; 3 cycles so far from rcall
                          
 	; 433 cycles broad  ; cycls                sum
-	out PORTB,Sync      ; 1                      1
+	out PORTV,Sync      ; 1                      1
 	ldi r22,144         ; 1                   
 	dec r22             ; 1    r22*3 = 432     433
 	brne pc-1           ; 2/1    
 
 	; 75 cycles black   ; cycls                sum
-	out PORTB,Black     ; 1                      1
+	out PORTV,Black     ; 1                      1
 	ldi r22,24          ; 1                   
 	dec r22             ; 1    r22*3 = 72       73
 	brne pc-1           ; 2/1  
@@ -389,7 +380,7 @@ Vser: ; 3 + 1006 + 4 cycles = 1013
 	nop                 ; 1                     75
 
 	; 433 cycles broad  ; cycls                sum
-	out PORTB,Sync      ; 1                      1
+	out PORTV,Sync      ; 1                      1
 	ldi r22,144         ; 1                   
 	dec r22             ; 1    r22*3 = 432     433
 	brne pc-1           ; 2/1              
@@ -402,7 +393,7 @@ Vser: ; 3 + 1006 + 4 cycles = 1013
 	; to complete the 1016 cycles from the horizontal line
 	;
 	; 65 cycles black  ; cycls                sum
-	out PORTB,Black     ; 1                      1
+	out PORTV,Black     ; 1                      1
 	ldi r22,21          ; 1                   
 	dec r22             ; 1     r22*3 = 63      64
 	brne pc-1           ; 2/1
@@ -417,7 +408,7 @@ Tbord:
 BBord:
 Blank: ; 3 + 1006 + 4 cycles
 	; 75 cycles Hsync   ; cycls                sum
-	out PORTB,Sync      ; 1                      1
+	out PORTV,Sync      ; 1                      1
 	ldi r22,24          ; 1                   
 	dec r22             ; 1    r22*3 = 72       73
 	brne pc-1           ; 2/1  
@@ -427,7 +418,7 @@ Blank: ; 3 + 1006 + 4 cycles
 	; 931 black cycles remaining from 1006-75
 
 	; 931 cycles shelf  ; cycls                sum
-	out PORTB,Black     ; 1                      1
+	out PORTV,Black     ; 1                      1
 	ldi r22,186         ; 1 
 	nop                 ; 1
 	nop                 ; 1
@@ -443,7 +434,7 @@ Blank: ; 3 + 1006 + 4 cycles
 
 Half1: ; 3 + 498 + 4 cycles = 505
 	; 75 cycles Hsync   ; cycls                sum
-	out PORTB,Sync      ; 1                      1
+	out PORTV,Sync      ; 1                      1
 	ldi r22,24          ; 1                   
 	dec r22             ; 1    r22*3 = 72       73
 	brne pc-1           ; 2/1  
@@ -453,7 +444,7 @@ Half1: ; 3 + 498 + 4 cycles = 505
 	; 423 black cycles remaining from 498-75
 
 	; 423 cycles black  ; cycls                sum
-	out PORTB,Black     ; 1                      1
+	out PORTV,Black     ; 1                      1
 	ldi r22,84          ; 1 
 	nop                 ; 1
 	nop                 ; 1
@@ -488,7 +479,7 @@ ProgGrayscale:
 Vis1: ; 3 + 1006 + 4 cycles
 
 	; 75 cycles Hsync   ; cycls                sum
-	out PORTB,Sync      ; 1                      1
+	out PORTV,Sync      ; 1                      1
 	ldi r22,24          ; 1                   
 	dec r22             ; 1    r22*3 = 72       73
 	brne pc-1           ; 2/1  
@@ -496,7 +487,7 @@ Vis1: ; 3 + 1006 + 4 cycles
 	nop                 ; 1                     75
 
 	; 75 cycles Backporch  ; cycls                sum
-	out PORTB,Black     ; 1                      1
+	out PORTV,Black     ; 1                      1
 	ldi r22,24          ; 1                   
 	dec r22             ; 1    r22*3 = 72       73
 	brne pc-1           ; 2/1  
@@ -518,7 +509,7 @@ Vis1: ; 3 + 1006 + 4 cycles
 	nop                                  ; 1   9
 
 DoStripeAscending:  ; 27*31 = 837 
-	out PORTB,r18            ; 1            1
+	out PORTV,r18            ; 1            1
 	         
 	ldi r22,6                ; 3*r22 = 18  19
 	dec r22                  ; 
@@ -532,7 +523,7 @@ DoStripeAscending:  ; 27*31 = 837
 	nop                      ; 1                27
 
 	; remaining 10 cycles
-	out PORTB,Black ;                1
+	out PORTV,Black ;                1
 	ldi r22,3       ; 3*r22 = 9     10
 	dec r22
 	brne pc-1
@@ -549,7 +540,7 @@ DecrGrayscale:
 Vis2: ; 3 + 1006 + 4 cycles
 
 	; 75 cycles Hsync   ; cycls                sum
-	out PORTB,Sync      ; 1                      1
+	out PORTV,Sync      ; 1                      1
 	ldi r22,24          ; 1                   
 	dec r22             ; 1    r22*3 = 72       73
 	brne pc-1           ; 2/1  
@@ -557,7 +548,7 @@ Vis2: ; 3 + 1006 + 4 cycles
 	nop                 ; 1                     75
 
 	; 75 cycles Backporch  ; cycls                sum
-	out PORTB,Black     ; 1                      1
+	out PORTV,Black     ; 1                      1
 	ldi r22,24          ; 1                   
 	dec r22             ; 1    r22*3 = 72       73
 	brne pc-1           ; 2/1  
@@ -579,7 +570,7 @@ Vis2: ; 3 + 1006 + 4 cycles
 	nop                                  ; 1   9
 
 DoStripeDescending:  ; 27*31 = 837 
-	out PORTB,r18            ; 1            1
+	out PORTV,r18            ; 1            1
 	         
 	ldi r22,6                ; 3*r22 = 18  19
 	dec r22                  ; 
@@ -593,7 +584,7 @@ DoStripeDescending:  ; 27*31 = 837
 	nop                      ; 1                 27
 
  ; remaining 10 cycles
-	out PORTB,Black ;                1
+	out PORTV,Black ;                1
 	ldi r22,3       ; 3*r22 = 9     10
 	dec r22
 	brne pc-1
@@ -612,7 +603,7 @@ ResProgGray:
 Resol1: ; 3 + 1006 + 4 cycles
 
 	; 75 cycles Hsync   ; cycls                sum
-	out PORTB,Sync      ; 1                      1
+	out PORTV,Sync      ; 1                      1
 	ldi r22,24          ; 1                   
 	dec r22             ; 1    r22*3 = 72       73
 	brne pc-1           ; 2/1  
@@ -620,7 +611,7 @@ Resol1: ; 3 + 1006 + 4 cycles
 	nop                 ; 1                     75
 
 	; 75 cycles Backporch  ; cycls                sum
-	out PORTB,Black     ; 1                      1
+	out PORTV,Black     ; 1                      1
 	ldi r22,24          ; 1                   
 	dec r22             ; 1    r22*3 = 72       73
 	brne pc-1           ; 2/1
@@ -656,7 +647,7 @@ ResDecrGray:
 Resol2: ; 3 + 1006 + 4 cycles
 
 	; 75 cycles Hsync   ; cycls                sum
-	out PORTB,Sync      ; 1                      1
+	out PORTV,Sync      ; 1                      1
 	ldi r22,24          ; 1
 	dec r22             ; 1    r22*3 = 72       73
 	brne pc-1           ; 2/1
@@ -664,7 +655,7 @@ Resol2: ; 3 + 1006 + 4 cycles
 	nop                 ; 1                     75
 
 	; 75 cycles Backporch  ; cycls                sum
-	out PORTB,Black     ; 1                      1
+	out PORTV,Black     ; 1                      1
 	ldi r22,24          ; 1
 	dec r22             ; 1    r22*3 = 72       73
 	brne pc-1           ; 2/1
@@ -696,7 +687,7 @@ Resol2: ; 3 + 1006 + 4 cycles
 ContinueResol:
 
 ; DoStripeAscending:
-	out PORTB,r18            ; 1            1
+	out PORTV,r18            ; 1            1
 
 	ldi r22,6                ; 3*r22 = 18  19
 	dec r22                  ;
@@ -712,67 +703,71 @@ ContinueResol:
 
 ; Resolution pattern
   	; highest resolution 7 line pairs 14 cycles
-	out PORTB,Black ; 1
-	 out PORTB,White ; 1
-	out PORTB,Black ; 1
-	 out PORTB,White ; 1
-	out PORTB,Black ; 1
-	 out PORTB,White ; 1
-	out PORTB,Black ; 1
-	 out PORTB,White ; 1
-	out PORTB,Black ; 1
-	 out PORTB,White ; 1
-	out PORTB,Black ; 1
-	 out PORTB,White ; 1
-	out PORTB,Black ; 1
-	 out PORTB,White ; 1
+	out PORTV,Black ; 1
+	 out PORTV,White ; 1
+	out PORTV,Black ; 1
+	 out PORTV,White ; 1
+	out PORTV,Black ; 1
+	 out PORTV,White ; 1
+	out PORTV,Black ; 1
+	 out PORTV,White ; 1
+	out PORTV,Black ; 1
+	 out PORTV,White ; 1
+	out PORTV,Black ; 1
+	 out PORTV,White ; 1
+	out PORTV,Black ; 1
+	 out PORTV,White ; 1
 
   	; mid resolution 7 line pairs  28 cycles
-	out PORTB,Black ; 1
+	out PORTV,Black ; 1
 	nop             ; 1
- 	 out PORTB,White ; 1
+ 	 out PORTV,White ; 1
 	 nop             ; 1
-	out PORTB,Black ; 1
+	out PORTV,Black ; 1
 	nop             ; 1
-	 out PORTB,White ; 1
+	 out PORTV,White ; 1
 	 nop             ; 1
-	out PORTB,Black ; 1
+	out PORTV,Black ; 1
 	nop             ; 1
-	 out PORTB,White ; 1
+	 out PORTV,White ; 1
 	 nop             ; 1
-	out PORTB,Black ; 1
+	out PORTV,Black ; 1
 	nop             ; 1
-	 out PORTB,White ; 1
+	 out PORTV,White ; 1
 	 nop             ; 1
-	out PORTB,Black ; 1
+	out PORTV,Black ; 1
 	nop             ; 1
-	 out PORTB,White ; 1
+	 out PORTV,White ; 1
 	 nop             ; 1
-	out PORTB,Black ; 1
+	out PORTV,Black ; 1
 	nop             ; 1
-	 out PORTB,White ; 1
+	 out PORTV,White ; 1
 	 nop             ; 1
-	out PORTB,Black ; 1
+	out PORTV,Black ; 1
 	nop             ; 1
-	 out PORTB,White ; 1
+	 out PORTV,White ; 1
 ;	 nop             ; 1   save 1 cycle for loading
                         ;
 
   	; mid resolution 6 1/2 line pairs
 	ldi r22,6       ; 1
-	out PORTB,Black ; 1
+	out PORTV,Black ; 1
 	nop             ; 1
 	dec r22
-	out PORTB,White ; 1
+	out PORTV,White ; 1
 	brne pc-4       ; 2
-	nop             ; 1
-	out PORTB,Black ; 1   half line pair
-	nop             ; 1
+
+;	nop             ; 1
+	ldi r24,13      ;1
+
+	out PORTV,Black ; 1   half line pair
+	adiw Z,3        ; 3 compensate three missing stripes
+; 	nop             ; 1
 ;	nop             ; 1   save cycle here
 
 ; Continue stripes
- 	ldi r24,13
-	out PORTB,r18            ; 1            1
+; 	ldi r24,13               ;1 preloaded above to save one cycle
+	out PORTV,r18            ; 1            1
 
 	ldi r22,6                ; 3*r22 = 18  19
 	dec r22                  ;
@@ -787,69 +782,72 @@ ContinueResol:
 
 ; Resolution pattern, second time
   	; highest resolution 7 line pairs
-	out PORTB,Black ; 1
-	out PORTB,White ; 1
-	out PORTB,Black ; 1
-	out PORTB,White ; 1
-	out PORTB,Black ; 1
-	out PORTB,White ; 1
-	out PORTB,Black ; 1
-	out PORTB,White ; 1
-	out PORTB,Black ; 1
-	out PORTB,White ; 1
-	out PORTB,Black ; 1
-	out PORTB,White ; 1
-	out PORTB,Black ; 1
-	out PORTB,White ; 1
+	out PORTV,Black ; 1
+	out PORTV,White ; 1
+	out PORTV,Black ; 1
+	out PORTV,White ; 1
+	out PORTV,Black ; 1
+	out PORTV,White ; 1
+	out PORTV,Black ; 1
+	out PORTV,White ; 1
+	out PORTV,Black ; 1
+	out PORTV,White ; 1
+	out PORTV,Black ; 1
+	out PORTV,White ; 1
+	out PORTV,Black ; 1
+	out PORTV,White ; 1
 
   	; mid resolution 7 line pairs
-	out PORTB,Black ; 1
+	out PORTV,Black ; 1
 	nop             ; 1
-	out PORTB,White ; 1
+	out PORTV,White ; 1
 	nop             ; 1
-	out PORTB,Black ; 1
+	out PORTV,Black ; 1
 	nop             ; 1
-	out PORTB,White ; 1
+	out PORTV,White ; 1
 	nop             ; 1
-	out PORTB,Black ; 1
+	out PORTV,Black ; 1
 	nop             ; 1
-	out PORTB,White ; 1
+	out PORTV,White ; 1
 	nop             ; 1
-	out PORTB,Black ; 1
+	out PORTV,Black ; 1
 	nop             ; 1
-	out PORTB,White ; 1
+	out PORTV,White ; 1
 	nop             ; 1
-	out PORTB,Black ; 1
+	out PORTV,Black ; 1
 	nop             ; 1
-	out PORTB,White ; 1
+	out PORTV,White ; 1
 	nop             ; 1
-	out PORTB,Black ; 1
+	out PORTV,Black ; 1
 	nop             ; 1
-	out PORTB,White ; 1
+	out PORTV,White ; 1
 	nop             ; 1
-	out PORTB,Black ; 1
+	out PORTV,Black ; 1
 	nop             ; 1
-	out PORTB,White ; 1
+	out PORTV,White ; 1
 ;	nop             ; 1   save 1 cycle for loading
                         ;
 
   	; mid resolution 6 1/2 line pairs
 	ldi r22,6       ; 1
-	out PORTB,Black ; 1
+	out PORTV,Black ; 1
 	nop             ; 1
 	dec r22
-	out PORTB,White ; 1
+	out PORTV,White ; 1
 	brne pc-4       ; 2
-	nop             ; 1
-	out PORTB,Black ; 1   half line pair
-	nop             ; 1
+	ldi r24,6       ; 1  preloaded here to save one cycle
+;	nop             ; 1
+	out PORTV,Black ; 1   half line pair
+
+	adiw Z,3        ; 3 compensate three missing stripes
+; 	nop             ; 1
 ;	nop             ; 1   save cycle here
 
 
 
 ; last  stripes on screen
-        ldi r24,6                ; 1   Five stripes
-	out PORTB,r18            ; 1            1
+;        ldi r24,6                ; 1   Five stripes
+	out PORTV,r18            ; 1            1
 
 	ldi r22,6                ; 3*r22 = 18  19
 	dec r22                  ;
@@ -864,7 +862,7 @@ ContinueResol:
 
 
 	; remaining 10 cycles
-	out PORTB,Black ;                1
+	out PORTV,Black ;                1
 	ldi r22,3       ; 3*r22 = 9     10
 	dec r22
 	brne pc-1
