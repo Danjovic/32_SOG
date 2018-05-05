@@ -70,3 +70,104 @@
 .equ gray31 = (1<<Sy)|(1<<G4)|(1<<G3)|(1<<G2)|(1<<G1)|(1<<G0) ; White
 
 
+;****** Macros ****************
+
+ ; generate Hsync + backporch, 150 cycles
+.macro HsyncBackporch
+	; 75 cycles Hsync   ; cycls                sum
+	out PORTV,Sync      ; 1                      1
+	ldi r22,24          ; 1                   
+	dec r22             ; 1    r22*3 = 72       73
+	brne pc-1           ; 2/1  
+	nop                 ; 1                     74
+	nop                 ; 1                     75
+
+	; 75 cycles Backporch  ; cycls                sum
+	out PORTV,Black     ; 1                      1
+	ldi r22,24          ; 1                   
+	dec r22             ; 1    r22*3 = 72       73
+	brne pc-1           ; 2/1
+	nop                 ; 1                     74
+	nop                 ; 1                     75
+.endm
+
+
+
+
+;draw a stripe, 27 cycles
+.macro	DoStripe		
+	ldi r18,@0      ; 1            1
+	out PORTV,r18   ; 1            2
+	ldi r22,8       ; 3*r22 = 24  26
+	dec r22         ;
+	brne pc-1       ;
+    nop             ; 1           27
+.endm
+
+
+
+
+; draw the resolution pattern 81 cycles
+.macro DoResolutionPattern 
+	nop             ; 1  timing equalization           1
+
+  	; highest resolution 7 line pairs - 14 cycles     15
+	out PORTV,Black ; 1
+	out PORTV,White ; 1
+	out PORTV,Black ; 1
+	out PORTV,White ; 1
+	out PORTV,Black ; 1
+	out PORTV,White ; 1
+	out PORTV,Black ; 1
+	out PORTV,White ; 1
+	out PORTV,Black ; 1
+	out PORTV,White ; 1
+	out PORTV,Black ; 1
+	out PORTV,White ; 1
+	out PORTV,Black ; 1
+	out PORTV,White ; 1
+
+  	; mid resolution 7 line pairs -  28 cycles        43 
+	out PORTV,Black ; 1
+	nop             ; 1
+ 	out PORTV,White ; 1
+	nop             ; 1
+	out PORTV,Black ; 1
+	nop             ; 1
+	out PORTV,White ; 1
+	nop             ; 1
+	out PORTV,Black ; 1
+	nop             ; 1
+	out PORTV,White ; 1
+	nop             ; 1
+	out PORTV,Black ; 1
+	nop             ; 1
+	out PORTV,White ; 1
+	nop             ; 1
+	out PORTV,Black ; 1
+	nop             ; 1
+	out PORTV,White ; 1
+	nop             ; 1
+	out PORTV,Black ; 1
+	nop             ; 1
+	out PORTV,White ; 1
+	nop             ; 1
+	out PORTV,Black ; 1
+	nop             ; 1
+	out PORTV,White ; 1
+;	 nop             ; 1   save 1 cycle for loading r22
+
+
+  	; mid resolution 6  line pairs - 36 cycles       79
+	ldi r22,6       ; 1
+	out PORTV,Black ; 1  1
+	nop             ; 1  2
+	dec r22         ; 1  3
+	out PORTV,White ; 1  4
+	brne pc-4       ; 2  5\5
+	nop             ; 1    6
+
+	out PORTV,Black ; 1   half line pair  2 cycles   81
+ 	nop             ; 1
+
+.endm

@@ -4,88 +4,85 @@
 ; Released under GPL 2.0
 ;
 .nolist
-;.include "tn85def.inc"
 .include "m328def.inc"
 .include "definitions.inc" 
 .list
 
 
+; Register usage
+; r18 = temp
+; r19 = BlackLevel 
+; r20 = White Level
+; r21 = SyncLevel
+; r22 = DelayCounter
+; r23 = Counter
+; r24 = Stripe Counter
 
-/*
- Register usage
- r18 = temp
- r19 = BlackLevel 
- r20 = White Level
- r21 = SyncLevel
- r22 = DelayCounter
- r23 = Counter
- r24 = Stripe Counter
-
- r30 = Zh
- r31 = Zl
-
-*/
 
 .def Black = r19
 .def White = r20
 .def Sync  = r21
 
 .cseg
-;.org 0
-	rjmp START         ; External Pin, Power-on Reset,Brown-out Reset, Watchdog Reset
-	rjmp EXT_INT       ; External Interrupt Request 0
-	rjmp PC_INT        ; Pin Change Interrupt Request 0
-	rjmp TIMER1_COMPA  ; Timer/Counter1 Compare Match A
-	rjmp TIMER1_OVF    ; Timer/Counter1 Overflow
-	rjmp TIMER0_OVF    ; Timer/Counter0 Overflow
-	rjmp EE_RDY        ; EEPROM Ready
-	rjmp ANA_COMP      ; Analog Comparator
-	rjmp ADCC          ; ADC Conversion Complete
-	rjmp TIMER1_COMPB  ; Timer/Counter1 Compare Match B
-	rjmp TIMER0_COMPA  ; Timer/Counter0 Compare Match A
-	rjmp TIMER0_COMPB  ; Timer/Counter0 Compare Match B
-	rjmp WDT           ; Watchdog Time-out
-	rjmp USI_START     ; USI START
-	rjmp USI_OVF       ; USI Overflow
+	rjmp START             ; External Pin, Power-on Reset, Brown-out Reset and Watchdog System Reset
+	rjmp INT_0              ; External Interrupt Request 0
+	rjmp INT_1              ; External Interrupt Request 0
+	rjmp PC_INT0           ; Pin Change Interrupt Request 0
+	rjmp PC_INT1           ; Pin Change Interrupt Request 1
+	rjmp PC_INT2           ; Pin Change Interrupt Request 2
+	rjmp WDT               ; WatchdogTime-out Interrupt
+	rjmp TIMER2_COMPA      ; Timer/Counter2 Compare Match A
+	rjmp TIMER2_COMPB      ; Timer/Coutner2 Compare Match B
+	rjmp TIMER2_OVF        ; Timer/Counter2 Overflow
+	rjmp TIMER1_CAPT       ; Timer/Counter1 Capture Event
+	rjmp TIMER1_COMPA      ; Timer/Counter1 Compare Match A
+	rjmp TIMER1_COMPB      ; Timer/Coutner1 Compare Match B
+	rjmp TIMER1_OVF        ; Timer/Counter1 Overflow
+	rjmp TIMER0_COMPA      ; Timer/Counter0 Compare Match A
+	rjmp TIMER0_COMPB      ; Timer/Coutner0 Compare Match B
+	rjmp TIMER0_OVF        ; Timer/Counter0 Overflow
+	rjmp SPI_STC           ; SPI Serial Transfer Complete
+	rjmp USART_RX          ; USART Rx Complete
+	rjmp USART_UDRE        ; USART Data Register Empty
+	rjmp USART_TX          ; USART Tx Complete
+	rjmp ADCC              ; ADC Conversion Complete
+	rjmp EE_READY          ; EEPROM Ready
+	rjmp ANALOG_COMP       ; Analog Comparator
+	rjmp TWI               ; 2-wire Serial Interface (I2C)
+	rjmp SPM_READY         ; Store Program Memory Ready
 
-; unused interrupts
-EXT_INT:
-PC_INT:
-TIMER1_COMPA:
-TIMER1_OVF:
-TIMER0_OVF:
-EE_RDY:
-ANA_COMP:
-ADCC:
-TIMER1_COMPB:
-TIMER0_COMPA:
-TIMER0_COMPB:
-WDT:
-USI_START:
-USI_OVF:
+ 
+; unused interrupts           
+INT_0:              
+INT_1:              
+PC_INT0:            
+PC_INT1:            
+PC_INT2:            
+WDT:      
+TIMER2_COMPA:      
+TIMER2_COMPB:      
+TIMER2_OVF:      
+TIMER1_CAPT:      
+TIMER1_COMPA:      
+TIMER1_COMPB:      
+TIMER1_OVF:      
+TIMER0_COMPA:      
+TIMER0_COMPB:      
+TIMER0_OVF:      
+SPI_STC:           
+USART_RX:          
+USART_UDRE:  
+USART_TX:         
+ADCC:              
+EE_READY:          
+ANALOG_COMP:       
+TWI:               
+SPM_READY:  
 reti
 
 
 ; ****************
 START:
-        ; Initialize system clock to PLL
-
-;     The internal PLL is enabled when:
-;     The PLLE bit in the register PLLCSR is set.
-;     The CKSEL fuse is programmed to ‘0001’.
-;     The CKSEL fuse is programmed to ‘0011’.
-;     The PLLCSR bit PLOCK is set when PLL is locked.
-      
-;	ldi r18,1
-;	out CKSEL,r18
-;	ldi r18,0
-;	out CLKPR,r18
-;	ldi r18,(1<<PLLE)
-;	out PLLCSR,r18
-;	in r18,PLLCSR
-;	andi r18,(1<<PLOCK)
-;	breq pc-1  ; wait for PLL to stabilize
-
 
 	; initialize stack
 	ldi r18, low(RAMEND)
@@ -153,6 +150,7 @@ START:
 
 loop:
 
+
 ; == FIRST FRAME, 262 lines ==
 	ldi r23,3   ; 1      (1016 from the last line at the end of the loop)
 
@@ -180,35 +178,37 @@ loop:
 	dec r23     ; 1      1014
 	brne pc-2   ; 2/1    1016/1015
 	
+
+
 	
 ; *************** Visible: 200 lines ******************
 	ldi r23,30 ; 1           1016 value for next cycle
-	rcall ProgGrayscale  ; 1013   1013
+	rcall Progressive  ; 1013   1013
 	dec r23     ; 1      1014
 	brne pc-2   ; 2/1    1016/1015
 
 	ldi r23,40  ;            1016
-	rcall ResProgGray  ; 1013   1013
+	rcall ProgrResolution ; 1013   1013
 	dec r23     ; 1      1014
 	brne pc-2   ; 2/1    1016/1015
 
 	ldi r23,30 ; 1           1016 value for next cycle
-	rcall ProgGrayscale  ; 1013   1013
+	rcall Progressive  ; 1013   1013
 	dec r23     ; 1      1014
 	brne pc-2   ; 2/1    1016/1015
 
 	ldi r23,30 ; 1           1016 value for next cycle
-	rcall DecrGrayscale  ; 1013   1013
+	rcall Regressive  ; 1013   1013
 	dec r23     ; 1      1014
 	brne pc-2   ; 2/1    1016/1015
 
 	ldi r23,40  ;            1016
-	rcall ResDecrGray  ; 1013   1013
+	rcall RegrResolution  ; 1013   1013
 	dec r23     ; 1      1014
 	brne pc-2   ; 2/1    1016/1015
 
 	ldi r23,30 ; 1           1016 value for next cycle
-	rcall DecrGrayscale  ; 1013   1013
+	rcall Regressive  ; 1013   1013
 	dec r23     ; 1      1014
 	brne pc-2   ; 2/1    1016/101
 
@@ -261,32 +261,32 @@ loop:
 
 ; *************** Visible: 200 lines ******************
 	ldi r23,30 ; 1           1016 value for next cycle
-	rcall ProgGrayscale  ; 1013   1013
+	rcall Progressive  ; 1013   1013
 	dec r23     ; 1      1014
 	brne pc-2   ; 2/1    1016/1015
 
 	ldi r23,40  ;            1016
-	rcall ResProgGray  ; 1013   1013
+	rcall ProgrResolution ; 1013   1013
 	dec r23     ; 1      1014
 	brne pc-2   ; 2/1    1016/1015
 
 	ldi r23,30 ; 1           1016 value for next cycle
-	rcall ProgGrayscale  ; 1013   1013
+	rcall Progressive  ; 1013   1013
 	dec r23     ; 1      1014
 	brne pc-2   ; 2/1    1016/1015
 
 	ldi r23,30 ; 1           1016 value for next cycle
-	rcall DecrGrayscale  ; 1013   1013
+	rcall Regressive  ; 1013   1013
 	dec r23     ; 1      1014
 	brne pc-2   ; 2/1    1016/1015
 
 	ldi r23,40  ;            1016
-	rcall ResDecrGray  ; 1013   1013
+	rcall RegrResolution  ; 1013   1013
 	dec r23     ; 1      1014
 	brne pc-2   ; 2/1    1016/1015
 
 	ldi r23,30 ; 1           1016 value for next cycle
-	rcall DecrGrayscale  ; 1013   1013
+	rcall Regressive  ; 1013   1013
 	dec r23     ; 1      1014
 	brne pc-2   ; 2/1    1016/10115
 
@@ -314,7 +314,8 @@ loop:
 ;
 ; **************************************************
 
-; ***** Horizontal Equalization Lines *****
+;****** Horizontal Equalization line *****
+;*
 Heq: ; 3 + 1006 + 4 cycles
 	 ; 3  cycles so far from rcall
 
@@ -360,7 +361,8 @@ Heq: ; 3 + 1006 + 4 cycles
 	; after returning we have 6 more cycles until the next I/O write
 
 
-
+;****** Vertical Serration Pulse line  *****
+;*
 Vser: ; 3 + 1006 + 4 cycles = 1013
 
 	; 3 cycles so far from rcall
@@ -404,6 +406,9 @@ Vser: ; 3 + 1006 + 4 cycles = 1013
 	; after returning we have 6 more cycles until the next I/O write
 
 
+
+;***** Blank lines, same for top and bottom border  *****
+;*
 Tbord:
 BBord:
 Blank: ; 3 + 1006 + 4 cycles
@@ -430,9 +435,9 @@ Blank: ; 3 + 1006 + 4 cycles
 	; after returning we have 6 more cycles until the next I/O write
 
 
-; Half Lines 505 bytes each
 
-Half1: ; 3 + 498 + 4 cycles = 505
+; *******    Half video line with Hsync pulse *****************
+Half1: ; 3 + 498 + 4 cycles = 505 bytes each
 	; 75 cycles Hsync   ; cycls                sum
 	out PORTV,Sync      ; 1                      1
 	ldi r22,24          ; 1                   
@@ -458,12 +463,12 @@ Half1: ; 3 + 498 + 4 cycles = 505
 	; after returning we have 6 more cycles until the next I/O write
 
 
+
+; **********  Half shelf line  **************************
 Half2: ; 3 + 498 + 4 cycles = 505  (just a delay)
-	ldi r22,166         ; 1                      1
-	dec r22             ; 1    r22*3 = 495     496
-	brne pc-1           ; 2/1  
-;	nop                 ; 1                    497
-
+	ldi r22,166         ;                       
+	dec r22             ;    r22*3 = 498     496
+	brne pc-1           ;   
 
 	; 4 more cycles to return 
 	ret 
@@ -471,56 +476,64 @@ Half2: ; 3 + 498 + 4 cycles = 505  (just a delay)
 
 
 
+;*********************************************************************
+;
+; Visible content lines, 1013 cycles each
+;
+;*********************************************************************
 
-; Visible lines, 1013 cycles each
 
+;*********************************************************************
+;* Generate a progressive grayscale line
+Progressive:
+    ; 3 + 1006 + 4 cycles
 
-ProgGrayscale:
-Vis1: ; 3 + 1006 + 4 cycles
-
-	; 75 cycles Hsync   ; cycls                sum
-	out PORTV,Sync      ; 1                      1
-	ldi r22,24          ; 1                   
-	dec r22             ; 1    r22*3 = 72       73
-	brne pc-1           ; 2/1  
-	nop                 ; 1                     74
-	nop                 ; 1                     75
-
-	; 75 cycles Backporch  ; cycls                sum
-	out PORTV,Black     ; 1                      1
-	ldi r22,24          ; 1                   
-	dec r22             ; 1    r22*3 = 72       73
-	brne pc-1           ; 2/1  
-	nop                 ; 1                     74
-	nop                 ; 1                     75
-
-	; remaining 856 visible cycles from here(1006-75-75)
+	HsyncBackporch  ; 150 cycles, 856 remaining (1006 - 150)
 
 	; 31 stripes * 27 cycles = 837 cycles
 	; remaining: 856 - 37 = 19 cycles
 
-    ; 9 cycles pre                                  
-	ldi r24,31 ; 31 stripes              ; 1   1
-	ldi ZH, high(Table_Ascending*2)     ; 1   2
-	ldi ZL,  low(Table_Ascending*2)     ; 1   3
-	lpm r18, z+  ; get first stripe shade ; 3   6
-	nop                                  ; 1   7
-	nop                                  ; 1   8
-	nop                                  ; 1   9
+	; 9 cycles first
+	; 31 * 27 cycles then = 837
+	; 10 cycles at the end
+	; 
 
-DoStripeAscending:  ; 27*31 = 837 
-	out PORTV,r18            ; 1            1
-	         
-	ldi r22,6                ; 3*r22 = 18  19
-	dec r22                  ; 
-	brne pc-1                ; 
+	ldi r22,3         ; r22*3 = 9 
+	dec r22
+	brne pc-1 
 
-	lpm r18, Z+              ; 3           22
-	nop                      ; 1           23
-	nop                      ; 1           24
-	dec r24                  ; 1           25
-	brne pc-8 ;DoStripeAscending   ; 2/1         27 / 26
-	nop                      ; 1                27
+	DoStripe gray1  ; 27  31*27 = 837
+	DoStripe gray2  ; 27  
+	DoStripe gray3  ; 27  
+	DoStripe gray4  ; 27  
+	DoStripe gray5  ; 27  
+	DoStripe gray6  ; 27  
+	DoStripe gray7  ; 27  
+	DoStripe gray8  ; 27  
+	DoStripe gray9  ; 27  
+	DoStripe gray10 ; 27  
+	DoStripe gray11 ; 27  
+	DoStripe gray12 ; 27  
+	DoStripe gray13 ; 27  
+	DoStripe gray14 ; 27  
+	DoStripe gray15 ; 27  
+	DoStripe gray16 ; 27  
+	DoStripe gray17 ; 27  
+	DoStripe gray18 ; 27  
+	DoStripe gray19 ; 27  
+	DoStripe gray20 ; 27  
+	DoStripe gray21 ; 27  
+	DoStripe gray22 ; 27  
+	DoStripe gray23 ; 27  
+	DoStripe gray24 ; 27  
+	DoStripe gray25 ; 27  
+	DoStripe gray26 ; 27  
+	DoStripe gray27 ; 27  
+	DoStripe gray28 ; 27  
+	DoStripe gray29 ; 27  
+	DoStripe gray30 ; 27  
+	DoStripe gray31 ; 27 
+
 
 	; remaining 10 cycles
 	out PORTV,Black ;                1
@@ -528,337 +541,134 @@ DoStripeAscending:  ; 27*31 = 837
 	dec r22
 	brne pc-1
 
-
-
-
 	; 4 more cycles to return 
 	ret 
 	; after returning we have 6 more cycles until the next I/O write
 
 
-DecrGrayscale:
-Vis2: ; 3 + 1006 + 4 cycles
+;*********************************************************************
+;* Generate a regressive grayscale line
+Regressive: 
+	; 3+ 1006 + 4 cycles
 
-	; 75 cycles Hsync   ; cycls                sum
-	out PORTV,Sync      ; 1                      1
-	ldi r22,24          ; 1                   
-	dec r22             ; 1    r22*3 = 72       73
-	brne pc-1           ; 2/1  
-	nop                 ; 1                     74
-	nop                 ; 1                     75
-
-	; 75 cycles Backporch  ; cycls                sum
-	out PORTV,Black     ; 1                      1
-	ldi r22,24          ; 1                   
-	dec r22             ; 1    r22*3 = 72       73
-	brne pc-1           ; 2/1  
-	nop                 ; 1                     74
-	nop                 ; 1                     75
-
-	; remaining 856 visible cycles from here(1006-75-75)
+	HsyncBackporch  ; 150 cycles, 856 remaining (1006 - 150)
 
 	; 31 stripes * 27 cycles = 837 cycles
 	; remaining: 856 - 37 = 19 cycles
 
-    ; 9 cycles pre                                  
-	ldi r24,31 ; 31 stripes              ; 1   1
-	ldi ZH, high(Table_Descending*2)    ; 1   2
-	ldi ZL,  low(Table_Descending*2)    ; 1   3
-	lpm r18, z+ ; get first stripe shade ; 3   6
-	nop                                  ; 1   7
-	nop                                  ; 1   8
-	nop                                  ; 1   9
+	; 9 cycles first
+	; 31 * 27 cycles then = 837
+	; 10 cycles at the end
+	; 
 
-DoStripeDescending:  ; 27*31 = 837 
-	out PORTV,r18            ; 1            1
-	         
-	ldi r22,6                ; 3*r22 = 18  19
-	dec r22                  ; 
-	brne pc-1                ; 
+	ldi r22,3         ; r22*3 = 9 
+	dec r22
+	brne pc-1 
 
-	lpm r18, Z+              ; 3           22
-	nop                      ; 1           23
-	nop                      ; 1           24
-	dec r24                  ; 1           25
-	brne pc-8 ;DoStripeDescending   ; 2/1         27 / 26
-	nop                      ; 1                 27
+	DoStripe gray31 ; 27  31*27 = 837
+	DoStripe gray30 ; 27  
+	DoStripe gray29 ; 27  
+	DoStripe gray28 ; 27  
+	DoStripe gray27 ; 27  
+	DoStripe gray26 ; 27  
+	DoStripe gray25 ; 27  
+	DoStripe gray24 ; 27  
+	DoStripe gray23 ; 27  
+	DoStripe gray22 ; 27  
+	DoStripe gray21 ; 27  
+	DoStripe gray20 ; 27  
+	DoStripe gray19 ; 27  
+	DoStripe gray18 ; 27  
+	DoStripe gray17 ; 27  
+	DoStripe gray16 ; 27  
+	DoStripe gray15 ; 27  
+	DoStripe gray14 ; 27  
+	DoStripe gray13 ; 27  
+	DoStripe gray12 ; 27  
+	DoStripe gray11 ; 27  
+	DoStripe gray10 ; 27  
+	DoStripe gray9  ; 27  
+	DoStripe gray8  ; 27  
+	DoStripe gray7  ; 27  
+	DoStripe gray6  ; 27  
+	DoStripe gray5  ; 27  
+	DoStripe gray4  ; 27  
+	DoStripe gray3  ; 27  
+	DoStripe gray2  ; 27  
+	DoStripe gray1  ; 27
 
- ; remaining 10 cycles
+
+	; remaining 10 cycles
 	out PORTV,Black ;                1
 	ldi r22,3       ; 3*r22 = 9     10
 	dec r22
 	brne pc-1
 
-
-
 	; 4 more cycles to return 
 	ret 
 	; after returning we have 6 more cycles until the next I/O write
 
+;*********************************************************************
+;* Generate a progressive grayscale line with resolution pattern
+ProgrResolution:  
+    ; 3 + 1006 + 4 cycles
 
-
-; *************************************************************************
-; Resolution pattern with grayscale
-ResProgGray:
-Resol1: ; 3 + 1006 + 4 cycles
-
-	; 75 cycles Hsync   ; cycls                sum
-	out PORTV,Sync      ; 1                      1
-	ldi r22,24          ; 1                   
-	dec r22             ; 1    r22*3 = 72       73
-	brne pc-1           ; 2/1  
-	nop                 ; 1                     74
-	nop                 ; 1                     75
-
-	; 75 cycles Backporch  ; cycls                sum
-	out PORTV,Black     ; 1                      1
-	ldi r22,24          ; 1                   
-	dec r22             ; 1    r22*3 = 72       73
-	brne pc-1           ; 2/1
-	nop                 ; 1                     74
-	nop                 ; 1                     75
-
-	; remaining 856 visible cycles from here(1006-75-75)
+	HsyncBackporch  ; 150 cycles, 856 remaining (1006 - 150)
 
 	; 31 stripes * 27 cycles = 837 cycles
-	; remaining: 856 - 37 = 19 cycles
+	; 6 stripes                           * 27  = 162  cycles
+	; 3 stripe times= resolution pattern        =  81  cycles
+	; 13 stripes                          * 27  = 351  cycles
+	; 3 stripe times= resolution pattern        =  81  cycles
+	; 6 stripes	                          * 27  = 162  cycles
+	;                                            ------
+	;                                             837 cycles
+	
+	; remaining: 856 - 837 = 19 cycles
 
-
-	; 5 stripes
-	; 3 stripe times= resolution pattern
-	; 13 stripes
-	; 3 stripe times= resolution pattern
-	; 5 stripes
-
-
-    ; 9 cycles pre
-	ldi r24,6 ; 5 stripes              ; 1   1
-	ldi ZH, high(Table_Ascending*2)     ; 1   2
-	ldi ZL,  low(Table_Ascending*2)     ; 1   3
-	lpm r18, z+  ; get first stripe shade ; 3   6
-	nop                                  ; 1   7
-
-	rjmp ContinueResol                  ;2
-
-
-; *************************************************************************
-; Resolution pattern with descending grayscale
-ResDecrGray:
-Resol2: ; 3 + 1006 + 4 cycles
-
-	; 75 cycles Hsync   ; cycls                sum
-	out PORTV,Sync      ; 1                      1
-	ldi r22,24          ; 1
-	dec r22             ; 1    r22*3 = 72       73
-	brne pc-1           ; 2/1
-	nop                 ; 1                     74
-	nop                 ; 1                     75
-
-	; 75 cycles Backporch  ; cycls                sum
-	out PORTV,Black     ; 1                      1
-	ldi r22,24          ; 1
-	dec r22             ; 1    r22*3 = 72       73
-	brne pc-1           ; 2/1
-	nop                 ; 1                     74
-	nop                 ; 1                     75
-
-	; remaining 856 visible cycles from here(1006-75-75)
-
-	; 31 stripes * 27 cycles = 837 cycles
-	; remaining: 856 - 37 = 19 cycles
-
-
-	; 5 stripes
-	; 3 stripe times= resolution pattern
-	; 13 stripes
-	; 3 stripe times= resolution pattern
-	; 5 stripes
-
-
-    ; 9 cycles pre
-	ldi r24,6 ; 5 stripes              ; 1   1
-	ldi ZH, high(Table_Descending*2)     ; 1   2
-	ldi ZL,  low(Table_Descending*2)     ; 1   3
-	lpm r18, z+  ; get first stripe shade ; 3   6
-	nop                                  ; 1   7
-	nop                                  ; 1   8
-	nop                                  ; 1   9
-
-ContinueResol:
-
-; DoStripeAscending:
-	out PORTV,r18            ; 1            1
-
-	ldi r22,6                ; 3*r22 = 18  19
-	dec r22                  ;
-	brne pc-1                ;
-
-	lpm r18, Z+              ; 3           22
-	nop                      ; 1           23
-	nop                      ; 1           24
-	dec r24                  ; 1           25
-	brne pc-8 ;              ; 2/1         27 / 26
-	nop                      ; 1                27
-
-
-; Resolution pattern
-  	; highest resolution 7 line pairs 14 cycles
-	out PORTV,Black ; 1
-	 out PORTV,White ; 1
-	out PORTV,Black ; 1
-	 out PORTV,White ; 1
-	out PORTV,Black ; 1
-	 out PORTV,White ; 1
-	out PORTV,Black ; 1
-	 out PORTV,White ; 1
-	out PORTV,Black ; 1
-	 out PORTV,White ; 1
-	out PORTV,Black ; 1
-	 out PORTV,White ; 1
-	out PORTV,Black ; 1
-	 out PORTV,White ; 1
-
-  	; mid resolution 7 line pairs  28 cycles
-	out PORTV,Black ; 1
-	nop             ; 1
- 	 out PORTV,White ; 1
-	 nop             ; 1
-	out PORTV,Black ; 1
-	nop             ; 1
-	 out PORTV,White ; 1
-	 nop             ; 1
-	out PORTV,Black ; 1
-	nop             ; 1
-	 out PORTV,White ; 1
-	 nop             ; 1
-	out PORTV,Black ; 1
-	nop             ; 1
-	 out PORTV,White ; 1
-	 nop             ; 1
-	out PORTV,Black ; 1
-	nop             ; 1
-	 out PORTV,White ; 1
-	 nop             ; 1
-	out PORTV,Black ; 1
-	nop             ; 1
-	 out PORTV,White ; 1
-	 nop             ; 1
-	out PORTV,Black ; 1
-	nop             ; 1
-	 out PORTV,White ; 1
-;	 nop             ; 1   save 1 cycle for loading
-                        ;
-
-  	; mid resolution 6 1/2 line pairs
-	ldi r22,6       ; 1
-	out PORTV,Black ; 1
-	nop             ; 1
+	; 9 cycles first
+	; 31 * 27 cycles then = 837
+	; 10 cycles at the end
+	; 
+	
+	
+	ldi r22,3         ; r22*3 = 9 
 	dec r22
-	out PORTV,White ; 1
-	brne pc-4       ; 2
+	brne pc-1 
 
-;	nop             ; 1
-	ldi r24,13      ;1
-
-	out PORTV,Black ; 1   half line pair
-	adiw Z,3        ; 3 compensate three missing stripes
-; 	nop             ; 1
-;	nop             ; 1   save cycle here
-
-; Continue stripes
-; 	ldi r24,13               ;1 preloaded above to save one cycle
-	out PORTV,r18            ; 1            1
-
-	ldi r22,6                ; 3*r22 = 18  19
-	dec r22                  ;
-	brne pc-1                ;
-
-	lpm r18, Z+              ; 3           22
-	nop                      ; 1           23
-	nop                      ; 1           24
-	dec r24                  ; 1           25
-	brne pc-8 ;              ; 2/1         27 / 26
-	nop                      ; 1                27
-
-; Resolution pattern, second time
-  	; highest resolution 7 line pairs
-	out PORTV,Black ; 1
-	out PORTV,White ; 1
-	out PORTV,Black ; 1
-	out PORTV,White ; 1
-	out PORTV,Black ; 1
-	out PORTV,White ; 1
-	out PORTV,Black ; 1
-	out PORTV,White ; 1
-	out PORTV,Black ; 1
-	out PORTV,White ; 1
-	out PORTV,Black ; 1
-	out PORTV,White ; 1
-	out PORTV,Black ; 1
-	out PORTV,White ; 1
-
-  	; mid resolution 7 line pairs
-	out PORTV,Black ; 1
-	nop             ; 1
-	out PORTV,White ; 1
-	nop             ; 1
-	out PORTV,Black ; 1
-	nop             ; 1
-	out PORTV,White ; 1
-	nop             ; 1
-	out PORTV,Black ; 1
-	nop             ; 1
-	out PORTV,White ; 1
-	nop             ; 1
-	out PORTV,Black ; 1
-	nop             ; 1
-	out PORTV,White ; 1
-	nop             ; 1
-	out PORTV,Black ; 1
-	nop             ; 1
-	out PORTV,White ; 1
-	nop             ; 1
-	out PORTV,Black ; 1
-	nop             ; 1
-	out PORTV,White ; 1
-	nop             ; 1
-	out PORTV,Black ; 1
-	nop             ; 1
-	out PORTV,White ; 1
-;	nop             ; 1   save 1 cycle for loading
-                        ;
-
-  	; mid resolution 6 1/2 line pairs
-	ldi r22,6       ; 1
-	out PORTV,Black ; 1
-	nop             ; 1
-	dec r22
-	out PORTV,White ; 1
-	brne pc-4       ; 2
-	ldi r24,6       ; 1  preloaded here to save one cycle
-;	nop             ; 1
-	out PORTV,Black ; 1   half line pair
-
-	adiw Z,3        ; 3 compensate three missing stripes
-; 	nop             ; 1
-;	nop             ; 1   save cycle here
-
-
-
-; last  stripes on screen
-;        ldi r24,6                ; 1   Five stripes
-	out PORTV,r18            ; 1            1
-
-	ldi r22,6                ; 3*r22 = 18  19
-	dec r22                  ;
-	brne pc-1                ;
-
-	lpm r18, Z+              ; 3           22
-	nop                      ; 1           23
-	nop                      ; 1           24
-	dec r24                  ; 1           25
-	brne pc-8 ;              ; 2/1         27 / 26
-	nop                      ; 1                27
+	DoStripe gray1      ; 27  31*27 = 837
+	DoStripe gray2      ; 27  
+	DoStripe gray3      ; 27  
+	DoStripe gray4      ; 27  
+	DoStripe gray5      ; 27  
+	DoStripe gray6      ; 27  
+	DoResolutionPattern	; 81
+;	DoStripe gray7      ; 27  
+;	DoStripe gray8      ; 27  
+;	DoStripe gray9      ; 27  
+	DoStripe gray10     ; 27  
+	DoStripe gray11     ; 27  
+	DoStripe gray12     ; 27  
+	DoStripe gray13     ; 27  
+	DoStripe gray14     ; 27  
+	DoStripe gray15     ; 27  
+	DoStripe gray16     ; 27  
+	DoStripe gray17     ; 27  
+	DoStripe gray18     ; 27  
+	DoStripe gray19     ; 27  
+	DoStripe gray20     ; 27  
+	DoStripe gray21     ; 27  
+	DoStripe gray22     ; 27
+	DoResolutionPattern	; 81	
+;	DoStripe gray23     ; 27  
+;	DoStripe gray24     ; 27  
+;	DoStripe gray25     ; 27  
+	DoStripe gray26     ; 27  
+	DoStripe gray27     ; 27  
+	DoStripe gray28     ; 27  
+	DoStripe gray29     ; 27  
+	DoStripe gray30     ; 27  
+	DoStripe gray31     ; 27 
 
 
 	; remaining 10 cycles
@@ -873,45 +683,67 @@ ContinueResol:
 
 
 
-; ************** Data Area ******************************
+;*********************************************************************
+;* Generate a regressive grayscale line with resolution pattern
+RegrResolution: ; 3+ 1006 + 4 cycles
 
+	HsyncBackporch  ; 150 cycles, 856 remaining (1006 - 150)
 
-Table_Ascending:
-.db   gray1,  gray2,  gray3,  gray4
-.db   gray5,  gray6,  gray7,  gray8
-.db   gray9, gray10, gray11, gray12
-.db  gray13, gray14, gray15, gray16
-.db  gray17, gray18, gray19, gray20
-.db  gray21, gray22, gray23, gray24
-.db  gray25, gray26, gray27, gray28
-.db  gray29, gray30, gray31, gray31
+	; 31 stripes * 27 cycles = 837 cycles
+	; remaining: 856 - 37 = 19 cycles
 
+	; 9 cycles first
+	; 31 * 27 cycles then = 837
+	; 10 cycles at the end
+	; 
 
-Table_Descending:
-.db  gray31, gray30, gray29, gray28
-.db  gray27, gray26, gray25, gray24
-.db  gray23, gray22, gray21, gray20
-.db  gray19, gray18, gray17, gray16
-.db  gray15, gray14, gray13, gray12
-.db  gray11, gray10,  gray9,  gray8
-.db   gray7,  gray6,  gray5,  gray4
-.db   gray3,  gray2,  gray1,  gray0
+	ldi r22,3         ; r22*3 = 9 
+	dec r22
+	brne pc-1 
 
+	DoStripe gray31     ; 27  31*27 = 837
+	DoStripe gray30     ; 27  
+	DoStripe gray29     ; 27  
+	DoStripe gray28     ; 27  
+	DoStripe gray27     ; 27  
+	DoStripe gray26     ; 27  
+	DoResolutionPattern	; 81
+;	DoStripe gray25     ; 27  
+;	DoStripe gray24     ; 27  
+;	DoStripe gray23     ; 27  
+	DoStripe gray22     ; 27  
+	DoStripe gray21     ; 27  
+	DoStripe gray20     ; 27  
+	DoStripe gray19     ; 27  
+	DoStripe gray18     ; 27  
+	DoStripe gray17     ; 27  
+	DoStripe gray16     ; 27  
+	DoStripe gray15     ; 27  
+	DoStripe gray14     ; 27  
+	DoStripe gray13     ; 27  
+	DoStripe gray12     ; 27  
+	DoStripe gray11     ; 27  
+	DoStripe gray10     ; 27  
+	DoResolutionPattern	; 81
+;	DoStripe gray9      ; 27  
+;	DoStripe gray8      ; 27  
+;	DoStripe gray7      ; 27  
+	DoStripe gray6      ; 27  
+	DoStripe gray5      ; 27  
+	DoStripe gray4      ; 27  
+	DoStripe gray3      ; 27  
+	DoStripe gray2      ; 27  
+	DoStripe gray1      ; 27
 
+	; remaining 10 cycles
+	out PORTV,Black ;                1
+	ldi r22,3       ; 3*r22 = 9     10
+	dec r22
+	brne pc-1
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+	; 4 more cycles to return 
+	ret 
+	; after returning we have 6 more cycles until the next I/O write
 
 
 
